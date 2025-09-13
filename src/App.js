@@ -309,7 +309,7 @@ export default function App() {
                 }
               }}
             >
-              🏓 AI Videos
+              AI-analyzed videos
             </button>
             <button
               onClick={() => setActiveTab("profile")}
@@ -371,6 +371,11 @@ export default function App() {
       <main style={{ maxWidth: "1200px", margin: "30px auto", padding: "0 20px" }}>
         {activeTab === "main" ? (
           <>
+            {/* AI Suggestions - TOP PRIORITY */}
+            <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '30px', marginBottom: '30px'}}>
+              <AISuggestions currentAndrewID={currentAndrewID} onViewChallenge={handleViewChallenge} />
+            </div>
+
             <div style={{display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '30px', marginBottom: '30px'}}>
               <div className="cmu-card">
                 <MatchForm currentAndrewID={currentAndrewID} />
@@ -398,10 +403,6 @@ export default function App() {
                 </div>
               </div>
             )}
-
-            <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '30px', marginBottom: '30px'}}>
-              <AISuggestions currentAndrewID={currentAndrewID} onViewChallenge={handleViewChallenge} />
-            </div>
           </>
         ) : activeTab === "feed" ? (
           <div style={{display: 'grid', gridTemplateColumns: '1fr', gap: '30px', marginBottom: '30px'}}>

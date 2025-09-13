@@ -58,8 +58,7 @@ const Betting = ({ currentAndrewID, user }) => {
         
         const challengesQuery = query(
           challengesRef, 
-          where('status', '==', 'accepted'),
-          orderBy('acceptedAt', 'desc')
+          orderBy('createdAt', 'desc')
         );
         const challengesSnapshot = await getDocs(challengesQuery);
         console.log('Challenges snapshot:', challengesSnapshot);
@@ -107,31 +106,61 @@ const Betting = ({ currentAndrewID, user }) => {
         console.error('Error fetching pending matches:', error);
       }
       
-      // 3. Get upcoming tournament matches
-      try {
-        const tournamentsRef = collection(db, 'tournaments');
-        const tournamentsQuery = query(
-          tournamentsRef,
-          where('status', 'in', ['upcoming', 'active']),
-          orderBy('startDate', 'asc')
-        );
-        const tournamentsSnapshot = await getDocs(tournamentsQuery);
-        console.log('Tournaments snapshot size:', tournamentsSnapshot.size);
-        console.log('Tournaments docs:', tournamentsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() })));
-        
-        const tournamentMatches = tournamentsSnapshot.docs.map(doc => ({
-          id: doc.id,
-          ...doc.data(),
-          matchType: 'tournament',
-          displayName: doc.data().name || 'Tournament Match',
-          sport: doc.data().sport || 'Ping Pong'
-        }));
-        
-        console.log('Found tournament matches:', tournamentMatches.length);
-        allMatches.push(...tournamentMatches);
-      } catch (error) {
-        console.error('Error fetching tournament matches:', error);
-      }
+      // 3. Add hardcoded sample matches
+      const hardcodedMatches = [
+        {
+          id: 'hardcoded-1',
+          challengerAndrewID: 'stavyagaonkar',
+          opponentAndrewID: 'josephouyang',
+          challengerName: 'Stavya Gaonkar',
+          opponentName: 'Joseph Ouyang',
+          sport: 'Tennis',
+          status: 'accepted',
+          description: 'Intense tennis match at the campus courts',
+          acceptedAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000), // 2 days ago
+          createdAt: new Date(Date.now() - 3 * 24 * 60 * 60 * 1000), // 3 days ago
+          matchType: 'challenge',
+          displayName: 'Stavya Gaonkar vs Joseph Ouyang',
+          scheduledDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000), // Tomorrow
+          challengerOdds: 1.45,
+          opponentOdds: 2.85
+        },
+        {
+          id: 'hardcoded-3',
+          challengerAndrewID: 'jonathanchen',
+          opponentAndrewID: 'stavyagaonkar',
+          challengerName: 'Jonathan Chen',
+          opponentName: 'Stavya Gaonkar',
+          sport: 'Soccer',
+          status: 'accepted',
+          description: 'Championship soccer match',
+          acceptedAt: new Date(Date.now() - 6 * 60 * 60 * 1000), // 6 hours ago
+          createdAt: new Date(Date.now() - 12 * 60 * 60 * 1000), // 12 hours ago
+          matchType: 'challenge',
+          displayName: 'Jonathan Chen vs Stavya Gaonkar',
+          scheduledDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000), // 2 days from now
+          challengerOdds: 3.10,
+          opponentOdds: 1.35
+        },
+        {
+          id: 'hardcoded-4',
+          challengerAndrewID: 'stavyagaonkar',
+          opponentAndrewID: 'jonathanchen',
+          challengerName: 'Stavya Gaonkar',
+          opponentName: 'Jonathan Chen',
+          sport: 'Beer Pong',
+          status: 'accepted',
+          description: 'Beach volleyball tournament prep',
+          createdAt: new Date(Date.now() - 4 * 24 * 60 * 60 * 1000), // 4 days ago
+          matchType: 'challenge',
+          displayName: 'Stavya Gaonkar vs Jonathan Chen',
+          challengerOdds: 1.90,
+          opponentOdds: 1.90
+        }
+      ];
+      
+      console.log('Adding hardcoded matches:', hardcodedMatches.length);
+      allMatches.push(...hardcodedMatches);
       
       console.log('Total matches found:', allMatches.length);
       
@@ -276,10 +305,16 @@ const Betting = ({ currentAndrewID, user }) => {
   };
 
   const calculateOdds = (match, betOn) => {
-    // Simple odds calculation - for demo purposes, use fixed odds
-    // In a real app, you'd fetch ELO ratings from the users collection
-    // For now, we'll use balanced odds to make betting fair
+    // Use hardcoded odds if available, otherwise use default odds
+    if (match.challengerOdds && match.opponentOdds) {
+      if (betOn === 'challenger') {
+        return match.challengerOdds;
+      } else {
+        return match.opponentOdds;
+      }
+    }
     
+    // Default odds calculation for matches without hardcoded odds
     if (betOn === 'challenger') {
       return 1.8; // 1.8x odds for challenger
     } else {
@@ -390,7 +425,10 @@ const Betting = ({ currentAndrewID, user }) => {
                         {match.displayName || `${match.challengerAndrewID || 'Challenger'} vs ${match.opponentAndrewID || 'Opponent'}`}
                       </h4>
                       <span style={{
-                        backgroundColor: match.matchType === 'challenge' ? '#10b981' : 
+                        backgroundColor: match.matchType === 'challenge' ? 
+                                        (match.status === 'accepted' ? '#10b981' : 
+                                         match.status === 'pending' ? '#f59e0b' : 
+                                         match.status === 'declined' ? '#ef4444' : '#6b7280') :
                                         match.matchType === 'pending' ? '#f59e0b' : 
                                         match.matchType === 'tournament' ? '#8b5cf6' : '#6b7280',
                         color: 'white',
@@ -400,14 +438,20 @@ const Betting = ({ currentAndrewID, user }) => {
                         fontWeight: 'bold',
                         textTransform: 'uppercase'
                       }}>
-                        {match.matchType}
+                        {match.matchType === 'challenge' ? match.status : match.matchType}
                       </span>
                     </div>
                     <div style={{ display: 'flex', gap: '15px', fontSize: '14px', color: '#6b7280', marginBottom: '10px' }}>
                       <span>🏆 {match.sport || 'Unknown Sport'}</span>
                       <span>📅 {formatDate(match.scheduledDate || match.acceptedAt || match.createdAt || match.startDate)}</span>
-                      {match.acceptedAt && (
+                      {match.status === 'accepted' && match.acceptedAt && (
                         <span>✅ Accepted {formatDate(match.acceptedAt)}</span>
+                      )}
+                      {match.status === 'pending' && (
+                        <span>⏳ Pending</span>
+                      )}
+                      {match.status === 'declined' && (
+                        <span>❌ Declined</span>
                       )}
                       {match.matchType === 'tournament' && match.status && (
                         <span>🏟️ {match.status}</span>
