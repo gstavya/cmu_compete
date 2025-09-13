@@ -1,0 +1,65 @@
+# Firestore Security Rules
+# Copy these rules to your Firebase Console > Firestore Database > Rules
+
+# Development Rules (More permissive - use these for now)
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Allow read/write access to all documents for authenticated users
+    match /{document=**} {
+      allow read, write: if request.auth != null;
+    }
+    
+    // Allow public read access to videos collection
+    match /videos/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Allow public read access to users collection
+    match /users/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+    
+    // Tournaments collection - public read, authenticated write
+    match /tournaments/{document} {
+      allow read: if true;
+      allow write: if request.auth != null;
+    }
+  }
+}
+
+# Production Rules (Use these when ready for production)
+# rules_version = '2';
+# service cloud.firestore {
+#   match /databases/{database}/documents {
+#     // Videos collection - public read, authenticated write
+#     match /videos/{document} {
+#       allow read: if true;
+#       allow write: if request.auth != null;
+#     }
+#     
+#     // Users collection - public read, authenticated write
+#     match /users/{document} {
+#       allow read: if true;
+#       allow write: if request.auth != null;
+#     }
+#     
+#     // Matches collection - authenticated read/write only
+#     match /matches/{document} {
+#       allow read, write: if request.auth != null;
+#     }
+#     
+#     // Challenges collection - authenticated read/write only
+#     match /challenges/{document} {
+#       allow read, write: if request.auth != null;
+#     }
+#     
+#     // Tournaments collection - public read, authenticated write
+#     match /tournaments/{document} {
+#       allow read: if true;
+#       allow write: if request.auth != null;
+#     }
+#   }
+# }
