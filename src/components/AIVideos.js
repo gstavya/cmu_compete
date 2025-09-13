@@ -171,6 +171,66 @@ const AIVideos = ({ currentAndrewID }) => {
     alert(`Fixed tracking IDs for ${fixedCount} videos. Downloads should now be enabled!`);
   };
 
+  // Generate AI summary based on tracking data
+  const generateAISummary = (video) => {
+    const trackingData = video.trackingData;
+    if (!trackingData) return "No AI analysis available for this video.";
+
+    const detectionRate = trackingData.detectionRate || 0;
+    const totalDetections = trackingData.totalDetections || 0;
+    const averageConfidence = trackingData.averageConfidence || 0;
+    const sport = video.title?.toLowerCase() || 'activity';
+
+    // Generate contextual summary based on sport and tracking data
+    let summary = "";
+    
+    if (sport.includes('ping') || sport.includes('table tennis')) {
+      if (detectionRate > 85) {
+        summary = `Excellent ball tracking detected! The AI successfully tracked ${totalDetections} ball movements with high precision. The consistent detection suggests smooth gameplay with clear ball visibility throughout the match.`;
+      } else if (detectionRate > 70) {
+        summary = `Good ball tracking performance with ${totalDetections} successful detections. The AI captured most ball movements, with some challenging shots potentially causing brief tracking interruptions.`;
+      } else {
+        summary = `Partial ball tracking achieved with ${totalDetections} detections. The video may contain fast-paced rallies or challenging lighting conditions that affected tracking accuracy.`;
+      }
+    } else if (sport.includes('tennis')) {
+      if (detectionRate > 85) {
+        summary = `Outstanding tennis ball tracking! The AI maintained excellent coverage with ${totalDetections} ball detections, indicating high-quality footage and consistent ball visibility.`;
+      } else if (detectionRate > 70) {
+        summary = `Solid tennis ball tracking with ${totalDetections} successful detections. Most rallies were captured effectively, with some challenging shots affecting overall accuracy.`;
+      } else {
+        summary = `Limited tennis ball tracking with ${totalDetections} detections. Fast serves or challenging court lighting may have impacted the AI's ability to consistently track the ball.`;
+      }
+    } else if (sport.includes('basketball')) {
+      if (detectionRate > 85) {
+        summary = `Exceptional basketball tracking! The AI successfully tracked ${totalDetections} ball movements with high accuracy, indicating excellent ball visibility and consistent gameplay.`;
+      } else if (detectionRate > 70) {
+        summary = `Good basketball ball tracking with ${totalDetections} detections. The AI captured most ball movements effectively, with some complex plays potentially causing tracking challenges.`;
+      } else {
+        summary = `Moderate basketball tracking with ${totalDetections} detections. Fast-paced gameplay or complex ball handling may have impacted tracking consistency.`;
+      }
+    } else {
+      // Generic summary for other sports
+      if (detectionRate > 85) {
+        summary = `Excellent object tracking achieved! The AI successfully identified and tracked ${totalDetections} key movements with high precision, indicating clear visibility and consistent motion patterns.`;
+      } else if (detectionRate > 70) {
+        summary = `Good tracking performance with ${totalDetections} successful detections. The AI captured most key movements effectively, with some challenging scenarios affecting overall accuracy.`;
+      } else {
+        summary = `Partial tracking with ${totalDetections} detections. Complex movements or challenging conditions may have impacted the AI's ability to maintain consistent tracking throughout the video.`;
+      }
+    }
+
+    // Add performance insights
+    if (averageConfidence > 0.8) {
+      summary += " The high confidence scores indicate reliable tracking performance.";
+    } else if (averageConfidence > 0.6) {
+      summary += " Moderate confidence scores suggest generally reliable tracking with some uncertainty in challenging scenarios.";
+    } else {
+      summary += " Lower confidence scores indicate the AI encountered several challenging tracking scenarios.";
+    }
+
+    return summary;
+  };
+
   if (loading) {
     return (
       <div className="cmu-card">
@@ -390,61 +450,164 @@ const AIVideos = ({ currentAndrewID }) => {
                 </div>
 
                 {video.trackingData && (
-                  <div style={{ 
-                    display: 'grid', 
-                    gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
-                    gap: '10px',
-                    marginTop: '15px'
-                  }}>
-                    <div style={{ 
-                      padding: '8px', 
-                      backgroundColor: 'white', 
-                      borderRadius: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #e5e7eb'
+                  <>
+                    {/* AI Summary Section */}
+                    <div style={{
+                      marginTop: '15px',
+                      padding: '16px',
+                      background: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)',
+                      borderRadius: '12px',
+                      color: 'white',
+                      boxShadow: '0 4px 16px rgba(108, 92, 231, 0.3)',
+                      border: '2px solid rgba(255,255,255,0.2)'
                     }}>
-                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Detection Rate</div>
-                      <div style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '14px' }}>
-                        {video.trackingData.detectionRate?.toFixed(1)}%
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        marginBottom: '12px'
+                      }}>
+                        <span style={{
+                          fontSize: '20px',
+                          marginRight: '8px'
+                        }}>🤖</span>
+                        <h4 style={{
+                          margin: '0',
+                          fontSize: '16px',
+                          fontWeight: 'bold',
+                          color: 'white'
+                        }}>
+                          AI Analysis Summary
+                        </h4>
+                        <div style={{
+                          marginLeft: 'auto',
+                          padding: '4px 8px',
+                          background: 'rgba(255,255,255,0.2)',
+                          borderRadius: '8px',
+                          fontSize: '12px',
+                          fontWeight: 'bold'
+                        }}>
+                          {video.trackingData.detectionRate?.toFixed(1)}% accuracy
+                        </div>
+                      </div>
+
+                      <div style={{
+                        fontSize: '14px',
+                        lineHeight: '1.5',
+                        marginBottom: '12px'
+                      }}>
+                        {generateAISummary(video)}
+                      </div>
+
+                      {/* AI Insights */}
+                      <div style={{
+                        display: 'flex',
+                        gap: '12px',
+                        flexWrap: 'wrap'
+                      }}>
+                        {video.trackingData.totalDetections > 0 && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 10px',
+                            background: 'rgba(255,255,255,0.15)',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }}>
+                            <span>🎯</span>
+                            <span>{video.trackingData.totalDetections} detections</span>
+                          </div>
+                        )}
+                        
+                        {video.trackingData.averageConfidence && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 10px',
+                            background: 'rgba(255,255,255,0.15)',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }}>
+                            <span>📊</span>
+                            <span>{(video.trackingData.averageConfidence * 100).toFixed(1)}% confidence</span>
+                          </div>
+                        )}
+
+                        {video.trackingData.duration && (
+                          <div style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '6px 10px',
+                            background: 'rgba(255,255,255,0.15)',
+                            borderRadius: '8px',
+                            fontSize: '12px'
+                          }}>
+                            <span>⏱️</span>
+                            <span>{Math.round(video.trackingData.duration)}s analyzed</span>
+                          </div>
+                        )}
                       </div>
                     </div>
+
+                    {/* Tracking Metrics Grid */}
                     <div style={{ 
-                      padding: '8px', 
-                      backgroundColor: 'white', 
-                      borderRadius: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #e5e7eb'
+                      display: 'grid', 
+                      gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', 
+                      gap: '10px',
+                      marginTop: '15px'
                     }}>
-                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Detections</div>
-                      <div style={{ fontWeight: 'bold', color: '#374151', fontSize: '14px' }}>
-                        {video.trackingData.totalDetections}
+                      <div style={{ 
+                        padding: '8px', 
+                        backgroundColor: 'white', 
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Detection Rate</div>
+                        <div style={{ fontWeight: 'bold', color: '#b91c1c', fontSize: '14px' }}>
+                          {video.trackingData.detectionRate?.toFixed(1)}%
+                        </div>
+                      </div>
+                      <div style={{ 
+                        padding: '8px', 
+                        backgroundColor: 'white', 
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Detections</div>
+                        <div style={{ fontWeight: 'bold', color: '#374151', fontSize: '14px' }}>
+                          {video.trackingData.totalDetections}
+                        </div>
+                      </div>
+                      <div style={{ 
+                        padding: '8px', 
+                        backgroundColor: 'white', 
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Trajectory Points</div>
+                        <div style={{ fontWeight: 'bold', color: '#374151', fontSize: '14px' }}>
+                          {video.trackingData.trajectoryLength}
+                        </div>
+                      </div>
+                      <div style={{ 
+                        padding: '8px', 
+                        backgroundColor: 'white', 
+                        borderRadius: '6px',
+                        textAlign: 'center',
+                        border: '1px solid #e5e7eb'
+                      }}>
+                        <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Duration</div>
+                        <div style={{ fontWeight: 'bold', color: '#374151', fontSize: '14px' }}>
+                          {video.trackingData.videoInfo?.duration?.toFixed(1)}s
+                        </div>
                       </div>
                     </div>
-                    <div style={{ 
-                      padding: '8px', 
-                      backgroundColor: 'white', 
-                      borderRadius: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #e5e7eb'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Trajectory Points</div>
-                      <div style={{ fontWeight: 'bold', color: '#374151', fontSize: '14px' }}>
-                        {video.trackingData.trajectoryLength}
-                      </div>
-                    </div>
-                    <div style={{ 
-                      padding: '8px', 
-                      backgroundColor: 'white', 
-                      borderRadius: '6px',
-                      textAlign: 'center',
-                      border: '1px solid #e5e7eb'
-                    }}>
-                      <div style={{ fontSize: '12px', color: '#6b7280', marginBottom: '4px' }}>Duration</div>
-                      <div style={{ fontWeight: 'bold', color: '#374151', fontSize: '14px' }}>
-                        {video.trackingData.videoInfo?.duration?.toFixed(1)}s
-                      </div>
-                    </div>
-                  </div>
+                  </>
                 )}
 
                 <div style={{ 
@@ -518,6 +681,107 @@ const AIVideos = ({ currentAndrewID }) => {
             {selectedVideo.trackingData && (
               <div>
                 <h3 style={{ color: '#374151', marginBottom: '15px' }}>Ball Tracking Analysis</h3>
+                
+                {/* AI Summary Section */}
+                <div style={{
+                  marginBottom: '20px',
+                  padding: '20px',
+                  background: 'linear-gradient(135deg, #6c5ce7 0%, #a29bfe 100%)',
+                  borderRadius: '12px',
+                  color: 'white',
+                  boxShadow: '0 4px 16px rgba(108, 92, 231, 0.3)',
+                  border: '2px solid rgba(255,255,255,0.2)'
+                }}>
+                  <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    marginBottom: '15px'
+                  }}>
+                    <span style={{
+                      fontSize: '24px',
+                      marginRight: '10px'
+                    }}>🤖</span>
+                    <h4 style={{
+                      margin: '0',
+                      fontSize: '18px',
+                      fontWeight: 'bold',
+                      color: 'white'
+                    }}>
+                      AI Analysis Summary
+                    </h4>
+                    <div style={{
+                      marginLeft: 'auto',
+                      padding: '6px 12px',
+                      background: 'rgba(255,255,255,0.2)',
+                      borderRadius: '10px',
+                      fontSize: '14px',
+                      fontWeight: 'bold'
+                    }}>
+                      {selectedVideo.trackingData.detectionRate?.toFixed(1)}% accuracy
+                    </div>
+                  </div>
+
+                  <div style={{
+                    fontSize: '16px',
+                    lineHeight: '1.6',
+                    marginBottom: '15px'
+                  }}>
+                    {generateAISummary(selectedVideo)}
+                  </div>
+
+                  {/* AI Insights */}
+                  <div style={{
+                    display: 'flex',
+                    gap: '15px',
+                    flexWrap: 'wrap'
+                  }}>
+                    {selectedVideo.trackingData.totalDetections > 0 && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(255,255,255,0.15)',
+                        borderRadius: '10px',
+                        fontSize: '14px'
+                      }}>
+                        <span>🎯</span>
+                        <span>{selectedVideo.trackingData.totalDetections} detections</span>
+                      </div>
+                    )}
+                    
+                    {selectedVideo.trackingData.averageConfidence && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(255,255,255,0.15)',
+                        borderRadius: '10px',
+                        fontSize: '14px'
+                      }}>
+                        <span>📊</span>
+                        <span>{(selectedVideo.trackingData.averageConfidence * 100).toFixed(1)}% confidence</span>
+                      </div>
+                    )}
+
+                    {selectedVideo.trackingData.duration && (
+                      <div style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        padding: '8px 12px',
+                        background: 'rgba(255,255,255,0.15)',
+                        borderRadius: '10px',
+                        fontSize: '14px'
+                      }}>
+                        <span>⏱️</span>
+                        <span>{Math.round(selectedVideo.trackingData.duration)}s analyzed</span>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 <div style={{ 
                   display: 'grid', 
                   gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', 
